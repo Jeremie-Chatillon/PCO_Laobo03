@@ -58,17 +58,6 @@ RenderThread::RenderThread(QObject *parent)
     for (int i = 0; i < ColormapSize; ++i)
         colormap[i] = rgbFromWaveLength(380.0 + (i * 400.0 / ColormapSize));
 
-
-
-
-
-
-    /* Attends la fin de chaque thread et libère la mémoire associée.
-     * Durant l'attente, l'application est bloquée.
-     */
-
-
-
 }
 
 RenderThread::~RenderThread()
@@ -118,10 +107,6 @@ void RenderThread::run()
         int halfHeight = resultSize.height() / 2;
         */
 
-
-        QSize tmpSize = resultSize;
-
-
         // INITALISE THREADS
 
 
@@ -130,43 +115,26 @@ void RenderThread::run()
 
 
         int tmpHeight = resultSize.height();
-        int imgStartY = centerY  - (tmpHeight /2);
+        int imgStartY = - tmpHeight/2;
         int diffHeigt = tmpHeight/thread_count;
-        //int firstY = imgStartY + (diffHeigt/thread_count);
 
-//        double tmpWeight = resultSize.width();
-//        double imgStartX = centerX - (tmpWeight/2);
-//        double diffWidth = tmpWeight/thread_count;
-//        double firstX = imgStartX +(diffWidth/2);
+
         while (pass < NumPasses && !restart) {
-            QImage image(resultSize, QImage::Format_RGB32);
-
-            for (size_t i=0; i<thread_count; i++)
-            {
-
-                threadList.append(new DelegationTread);
-                //tmpSize.setHeight(resultSize.height() / thread_count * (i +1));
-                //threadList.at(i)->render(centerX, (centerY * (i + 1)), scaleFactor, tmpSize, &image, pass);
-                //tmpSize.setHeight(resultSize.height() / 2  * thread_count );
-                //threadList.at(i)->render(centerX, (firstY + (i * 2 * diffHeigt)), scaleFactor, tmpSize, &image, pass);
-//              tmpSize.setWidth(resultSize.width() / thread_count * (i +1));
-//              threadList.at(i)->render((firstX + (i * diffWidth)), centerY, scal  eFactor / thread_count * (i + 1), tmpSize, &image, pass);
-                //tmpSize.setHeight(resultSize.height() / thread_count);
-
-
-                // FONCTIONNE MAIS IL FAUT PASSSER LES BLOCKERS (RESTART)
-                threadList.at(i)->render(centerX, centerY, scaleFactor, tmpSize, &image, pass, imgStartY + (diffHeigt * i), imgStartY + (diffHeigt * (i +1)), &abort, &restart);
-            }
-
-
 
             QTime startTime = QTime::currentTime();
+            QImage image(resultSize, QImage::Format_RGB32);
 
+            int maxIterations = (1 << (2 * pass + 6)) + 32;
+
+            // Calculs threads creation
             for (size_t i=0; i<thread_count; i++)
             {
-                threadList.at(i)->start();
+                currentThread = new DelegationTread(centerX, centerY, scaleFactor, resultSize, &image, maxIterations, imgStartY + (diffHeigt * i), imgStartY + (diffHeigt * (i +1)), &restart,  &abort, colormap);
+                threadList.append(currentThread);
+                currentThread->start();
             }
 
+            // Calculs threads wait and delete
             for (size_t i=0; i<thread_count; i++)
             {
                 currentThread = threadList.at(i);
@@ -182,72 +150,7 @@ void RenderThread::run()
                 emit renderedImage(image, scaleFactor);
 
             ++pass;
-
-
-
         }
-
-/*
-
-        const int NumPasses = 8;
-        int pass = 0;
-        while (pass < NumPasses && !restart) {
-            const int MaxIterations = (1 << (2 * pass + 6)) + 32;
-
-            QTime startTime = QTime::currentTime();
-
-            const int Limit = 4;
-
-            for (int y = -halfHeight; y < halfHeight; ++y) {
-                if (restart)
-                    break;
-                if (abort)
-                    return;
-
-                QRgb *scanLine =
-                        reinterpret_cast<QRgb *>(image.scanLine(y + halfHeight));
-                double ay = centerY + (y * scaleFactor);
-
-                for (int x = -halfWidth; x < halfWidth; ++x) {
-                    double ax = centerX + (x * scaleFactor);
-                    double a1 = ax;
-                    double b1 = ay;
-                    int numIterations = 0;
-
-                    do {
-                        ++numIterations;
-                        double a2 = (a1 * a1) - (b1 * b1) + ax;
-                        double b2 = (2 * a1 * b1) + ay;
-                        if ((a2 * a2) + (b2 * b2) > Limit)
-                            break;
-
-                        ++numIterations;
-                        a1 = (a2 * a2) - (b2 * b2) + ax;
-                        b1 = (2 * a2 * b2) + ay;
-                        if ((a1 * a1) + (b1 * b1) > Limit)
-                            break;
-                    } while (numIterations < MaxIterations);
-
-                    if (numIterations < MaxIterations) {
-                        *scanLine++ = colormap[numIterations % ColormapSize];
-                    } else {
-                        *scanLine++ = qRgb(0, 0, 0);
-                    }
-                }
-            }
-
-
-            QTime endTime = QTime::currentTime();
-            std::cout << "Time for pass " << pass << " (in ms) : " << startTime.msecsTo(endTime) << std::endl;
-
-                if (!restart)
-                    emit renderedImage(image, scaleFactor);
-
-                ++pass;
-        }
-*/
-
-
 
         mutex.lock();
         if (!restart)
