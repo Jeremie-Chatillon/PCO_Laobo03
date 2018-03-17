@@ -50,7 +50,7 @@
 RenderThread::RenderThread(QObject *parent)
     : QThread(parent)
 {
-    thread_count = QThread::idealThreadCount();
+   thread_count = QThread::idealThreadCount();
 
     restart = false;
     abort = false;
@@ -59,12 +59,7 @@ RenderThread::RenderThread(QObject *parent)
         colormap[i] = rgbFromWaveLength(380.0 + (i * 400.0 / ColormapSize));
 
 
-    for (i=0; i<thread_count; i++)
-    {
-        currentThread = threadList.at(i);
-        currentThread = new MyThread(nbIterations);
-        threadList.append(currentThread);
-    }
+
 
 
 
@@ -82,6 +77,7 @@ RenderThread::~RenderThread()
     abort = true;
     condition.wakeOne();
     mutex.unlock();
+
 
     wait();
 }
@@ -106,7 +102,8 @@ void RenderThread::render(double centerX, double centerY, double scaleFactor,
 
 void RenderThread::run()
 {
-    DelegationTread currentThread;
+    DelegationTread* currentThread;
+
     forever {
         mutex.lock();
         // Stoppper tout les threads
@@ -116,18 +113,77 @@ void RenderThread::run()
         double centerY = this->centerY;
         mutex.unlock();
 
+        /*
         int halfWidth = resultSize.width() / 2;
         int halfHeight = resultSize.height() / 2;
-        QImage image(resultSize, QImage::Format_RGB32);
+        */
+
 
         QSize tmpSize = resultSize;
-        for (i=0; i<nbThreads; i++)
-        {
-            currentThread = threadList.at(i);
 
-            tmpSize.setHeight(resultSize.height()/ thread_count);
-            currentThread.render(centerX /thread_count * (i + 1), centerY, scaleFactor, tmpSize);
-            connect(&(threadList.at(i)), SIGNAL(renderedImage(QImage,double)), this, SLOT(updatePixmap(QImage,double)));
+
+        // INITALISE THREADS
+
+
+        const int NumPasses = 8;
+        int pass = 0;
+
+
+        int tmpHeight = resultSize.height();
+        int imgStartY = centerY  - (tmpHeight /2);
+        int diffHeigt = tmpHeight/thread_count;
+        //int firstY = imgStartY + (diffHeigt/thread_count);
+
+//        double tmpWeight = resultSize.width();
+//        double imgStartX = centerX - (tmpWeight/2);
+//        double diffWidth = tmpWeight/thread_count;
+//        double firstX = imgStartX +(diffWidth/2);
+        while (pass < NumPasses && !restart) {
+            QImage image(resultSize, QImage::Format_RGB32);
+
+            for (size_t i=0; i<thread_count; i++)
+            {
+
+                threadList.append(new DelegationTread);
+                //tmpSize.setHeight(resultSize.height() / thread_count * (i +1));
+                //threadList.at(i)->render(centerX, (centerY * (i + 1)), scaleFactor, tmpSize, &image, pass);
+                //tmpSize.setHeight(resultSize.height() / 2  * thread_count );
+                //threadList.at(i)->render(centerX, (firstY + (i * 2 * diffHeigt)), scaleFactor, tmpSize, &image, pass);
+//              tmpSize.setWidth(resultSize.width() / thread_count * (i +1));
+//              threadList.at(i)->render((firstX + (i * diffWidth)), centerY, scal  eFactor / thread_count * (i + 1), tmpSize, &image, pass);
+                //tmpSize.setHeight(resultSize.height() / thread_count);
+
+
+                // FONCTIONNE MAIS IL FAUT PASSSER LES BLOCKERS (RESTART)
+                threadList.at(i)->render(centerX, centerY, scaleFactor, tmpSize, &image, pass, imgStartY + (diffHeigt * i), imgStartY + (diffHeigt * (i +1)), &abort, &restart);
+            }
+
+
+
+            QTime startTime = QTime::currentTime();
+
+            for (size_t i=0; i<thread_count; i++)
+            {
+                threadList.at(i)->start();
+            }
+
+            for (size_t i=0; i<thread_count; i++)
+            {
+                currentThread = threadList.at(i);
+                currentThread->wait();
+                delete currentThread;
+            }
+            threadList.clear();
+
+            QTime endTime = QTime::currentTime();
+            std::cout << "Time for pass " << pass << " (in ms) : " << startTime.msecsTo(endTime) << std::endl;
+
+            if (!restart)
+                emit renderedImage(image, scaleFactor);
+
+            ++pass;
+
+
 
         }
 
@@ -191,18 +247,15 @@ void RenderThread::run()
         }
 */
 
-        for (i=0; i<nbThreads; i++)
-        {
-            currentThread = threadList.at(i);
-            currentThread->wait();
-            delete currentThread;
-        }
+
 
         mutex.lock();
         if (!restart)
             condition.wait(&mutex);
         restart = false;
         mutex.unlock();
+
+
     }
 }
 

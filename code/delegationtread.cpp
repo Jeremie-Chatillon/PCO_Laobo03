@@ -6,92 +6,113 @@
 
 //}
 
+#include <iostream>
+#include <QtWidgets>
 
-DelegationTread::delegationTread(QObject *parent):QThread(parent){
+DelegationTread::~DelegationTread()
+{
+    mutex.lock();
+    //abort = true;
+    condition.wakeOne();
+    mutex.unlock();
+
+    wait();
+}
+
+DelegationTread::DelegationTread(QObject *parent)
+    :QThread(parent)
+{
 
     for (int i = 0; i < ColormapSize; ++i)
         colormap[i] = rgbFromWaveLength(380.0 + (i * 400.0 / ColormapSize));
-    restart = false;
-    abort = false;
-
-
+    //restart = false;
+    //abort = false;
 }
 
 void DelegationTread::render(double centerX, double centerY, double scaleFactor,
-                          QSize resultSize)
+                          QSize resultSize, QImage* image, int pass, int y0, int y1, bool* restart, bool* abort)
 {
-    QMutexLocker locker(&mutex);
 
+
+    this->restart = restart;
+    this->abort = abort;
     this->centerX = centerX;
     this->centerY = centerY;
     this->scaleFactor = scaleFactor;
     this->resultSize = resultSize;
 
+    this->y0 = y0;
+    this->y1 = y1;
+
     if (!isRunning()) {
         start(LowPriority);
     } else {
-        restart = true;
+        //restart = true;
         condition.wakeOne();
     }
+
+    this->image = image;
+    this->pass = pass;
 }
 
 void DelegationTread::run(){
-    const int NumPasses = 8;
-    int pass = 0;
 
-    while (pass < NumPasses && !restart) {
-        const int MaxIterations = (1 << (2 * pass + 6)) + 32;
+    //mutex.lock();
+    // Stoppper tout les threads
+    QSize resultSize = this->resultSize;
+    double scaleFactor = this->scaleFactor;
+    double centerX = this->centerX;
+    double centerY = this->centerY;
+    //mutex.unlock();
 
-        QTime startTime = QTime::currentTime();
+    int halfWidth = resultSize.width() / 2;
+    int halfHeight = resultSize.height() / 2;
 
-        const int Limit = 4;
 
-        for (int y = -halfHeight; y < halfHeight; ++y) {
-            if (restart)
-                break;
-            if (abort)
-                return;
 
-            QRgb *scanLine =
-                    reinterpret_cast<QRgb *>(image.scanLine(y + halfHeight));
-            double ay = centerY + (y * scaleFactor);
 
-            for (int x = -halfWidth; x < halfWidth; ++x) {
-                double ax = centerX + (x * scaleFactor);
-                double a1 = ax;
-                double b1 = ay;
-                int numIterations = 0;
 
-                do {
-                    ++numIterations;
-                    double a2 = (a1 * a1) - (b1 * b1) + ax;
-                    double b2 = (2 * a1 * b1) + ay;
-                    if ((a2 * a2) + (b2 * b2) > Limit)
-                        break;
 
-                    ++numIterations;
-                    a1 = (a2 * a2) - (b2 * b2) + ax;
-                    b1 = (2 * a2 * b2) + ay;
-                    if ((a1 * a1) + (b1 * b1) > Limit)
-                        break;
-                } while (numIterations < MaxIterations);
+    const int MaxIterations = (1 << (2 * pass + 6)) + 32;
 
-                if (numIterations < MaxIterations) {
-                    *scanLine++ = colormap[numIterations % ColormapSize];
-                } else {
-                    *scanLine++ = qRgb(0, 0, 0);
-                }
+    const int Limit = 4;
+
+    for (int y = y0; y < y1; ++y) {
+        if (*restart)
+            break;
+        if (*abort)
+            return;
+
+        QRgb *scanLine =
+                reinterpret_cast<QRgb *>(image->scanLine(y + halfHeight));
+        double ay = centerY + (y * scaleFactor);
+
+        for (int x = -halfWidth; x < halfWidth; ++x) {
+            double ax = centerX + (x * scaleFactor);
+            double a1 = ax;
+            double b1 = ay;
+            int numIterations = 0;
+
+            do {
+                ++numIterations;
+                double a2 = (a1 * a1) - (b1 * b1) + ax;
+                double b2 = (2 * a1 * b1) + ay;
+                if ((a2 * a2) + (b2 * b2) > Limit)
+                    break;
+
+                ++numIterations;
+                a1 = (a2 * a2) - (b2 * b2) + ax;
+                b1 = (2 * a2 * b2) + ay;
+                if ((a1 * a1) + (b1 * b1) > Limit)
+                    break;
+            } while (numIterations < MaxIterations);
+
+            if (numIterations < MaxIterations) {
+                *scanLine++ = colormap[numIterations % ColormapSize];
+            } else {
+                *scanLine++ = qRgb(0, 0, 0);
             }
         }
-
-
-        QTime endTime = QTime::currentTime();
-        std::cout << "Time for pass " << pass << " (in ms) : " << startTime.msecsTo(endTime) << std::endl;
-
-            if (!restart)
-                emit renderedImage(image, scaleFactor);
-
-            ++pass;
     }
 
 }

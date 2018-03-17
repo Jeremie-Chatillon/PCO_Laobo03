@@ -86,6 +86,7 @@ private:
     size_t thread_count;
 
     //! Liste des threads MyThread qui executent les calculs.
+
     QList<DelegationTread*> threadList;
 
 };
