@@ -1,18 +1,11 @@
 #include "delegationtread.h"
 
-//delegationTread::delegationTread(QObject *parent, bool* abort, bool* restart, size** colorMap, Mutex* mutex, size_t* nbThreads, size_t id)
-//    : QThread(parent), abort(abort), restart(restart), colorMap(colorMap), mutex(mutex), nbTreads(nbThreads), id (id)
-//{
-
-//}
-
 #include <iostream>
 #include <QtWidgets>
 
 DelegationTread::~DelegationTread()
 {
     mutex.lock();
-    abort = true;
     condition.wakeOne();
     mutex.unlock();
 
@@ -20,23 +13,21 @@ DelegationTread::~DelegationTread()
     wait();
 }
 
-DelegationTread::DelegationTread(double centerX, double centerY, double scaleFactor, QSize resultSize, QImage* image, int maxIterations, int y0, int y1, bool* restart, bool* abort, uint* colormap, QObject *parent)
+DelegationTread::DelegationTread(double centerX, double centerY, double scaleFactor, QSize* resultSize, QImage* image, int maxIterations, int y0, int y1, bool* restart, bool* abort, uint* colormap, QObject *parent)
     :QThread(parent), centerX(centerX), centerY(centerY), scaleFactor(scaleFactor), resultSize(resultSize), image(image), maxIterations(maxIterations), y0(y0), y1(y1), restart(restart), abort(abort), colormap(colormap)
 {
 }
 
+/**
+ * @brief DelegationTread::run
+ * Calcul de madelbrot sur un proportion y de l'image.
+ * Pas besoin de faire une copie local des valeurs de calculs car elles ne peuvent être modifiées pendant l'execution.
+ *
+ */
 void DelegationTread::run(){
 
-    mutex.lock();
-    QSize resultSize = this->resultSize;
-    double scaleFactor = this->scaleFactor;
-    double centerX = this->centerX;
-    double centerY = this->centerY;
-
-    mutex.unlock();
-
-    int halfWidth = resultSize.width() / 2;
-    int halfHeight = resultSize.height() / 2;
+    int halfWidth = resultSize->width() / 2;
+    int halfHeight = resultSize->height() / 2;
 
     const int Limit = 4;
 

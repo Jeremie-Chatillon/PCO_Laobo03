@@ -17,10 +17,7 @@ class DelegationTread: public QThread{
 public:
 
     ~DelegationTread();
-    DelegationTread(double centerX, double centerY, double scaleFactor, QSize resultSize, QImage* image, int maxIterations, int y0, int y1, bool* restart, bool* abort,uint* colormap, QObject* parent = 0);
-
-
-    //void render(double centerX, double centerY, double scaleFactor, QSize resultSize, QImage* image, int maxIterations, int y0, int y1, bool* restart, bool* abort);
+    DelegationTread(double centerX, double centerY, double scaleFactor, QSize* resultSize, QImage* image, int maxIterations, int y0, int y1, bool* restart, bool* abort,uint* colormap, QObject* parent = 0);
 
 signals:
     void renderedImage(const QImage &image, double scaleFactor);
@@ -34,7 +31,6 @@ protected:
     void run() Q_DECL_OVERRIDE;
 
 private:
-    //uint rgbFromWaveLength(double wave);
 
 
     QMutex mutex;
@@ -42,17 +38,16 @@ private:
     double centerX;
     double centerY;
     double scaleFactor;
-    QSize resultSize;
-    bool* restart;
-    bool* abort;
-    size_t id;
+    QSize* resultSize;
+    QImage* image;
+    int maxIterations;
     int y0;
     int y1;
 
-    int maxIterations;
 
+    bool* restart;
+    bool* abort;
 
-    QImage* image;
 
     //int pass;
 

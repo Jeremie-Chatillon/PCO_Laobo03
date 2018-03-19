@@ -102,34 +102,27 @@ void RenderThread::run()
         double centerY = this->centerY;
         mutex.unlock();
 
-        /*
-        int halfWidth = resultSize.width() / 2;
-        int halfHeight = resultSize.height() / 2;
-        */
-
-        // INITALISE THREADS
-
 
         const int NumPasses = 8;
         int pass = 0;
 
-
+        // Découpage de l'image par la heuteur en fonction du nombre de thread idéal
         int tmpHeight = resultSize.height();
         int imgStartY = - tmpHeight/2;
         int diffHeigt = tmpHeight/thread_count;
 
 
-        while (pass < NumPasses && !restart) {
+        while (pass < NumPasses && !restart){
 
             QTime startTime = QTime::currentTime();
             QImage image(resultSize, QImage::Format_RGB32);
 
             int maxIterations = (1 << (2 * pass + 6)) + 32;
 
-            // Calculs threads creation
+            // Calculs threads creation et stockage dans une liste
             for (size_t i=0; i<thread_count; i++)
             {
-                currentThread = new DelegationTread(centerX, centerY, scaleFactor, resultSize, &image, maxIterations, imgStartY + (diffHeigt * i), imgStartY + (diffHeigt * (i +1)), &restart,  &abort, colormap);
+                currentThread = new DelegationTread(centerX, centerY, scaleFactor, &resultSize, &image, maxIterations, imgStartY + (diffHeigt * i), imgStartY + (diffHeigt * (i +1)), &restart,  &abort, colormap);
                 threadList.append(currentThread);
                 currentThread->start();
             }
