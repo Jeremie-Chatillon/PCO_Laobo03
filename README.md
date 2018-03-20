@@ -16,12 +16,12 @@ Il n'est pas nécessaire d'implémenter un déstructeur spécifique dans la clas
 
 Pour tester notre programme, nous avons verifié que l'image obtenue à l'execution était conforme et redimentionnable.
 
-![Mandelbrot](.\Mandelbrot.PNG)
+![Mandelbrot](./Mandelbrot.PNG)
 
 Nous avons aussi tésté que le nombre de passe se réinitialise à chacune des modification de l'image(interruption des calculs).
 
-![Mandelbrot_abort](.\Mandelbrot_abort.PNG)
+![Mandelbrot_abort](./Mandelbrot_abort.PNG)
 
 
 
-Finalement, nous avons contrôlé que le multithreading était bien actif en contrôlant l'état de chacun des coeurs de notre processeur pendant l'execution.![Result](.\Processor.jpg)
+Finalement, nous avons contrôlé que le multithreading était bien actif en contrôlant l'état de chacun des coeurs de notre processeur pendant l'execution.![Result](./Processor.jpg)
