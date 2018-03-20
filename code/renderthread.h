@@ -45,7 +45,7 @@
 #include <QSize>
 #include <QThread>
 #include <QWaitCondition>
-#include "delegationtread.h"
+#include "delegationthread.h"
 
 QT_BEGIN_NAMESPACE
 class QImage;
@@ -87,7 +87,7 @@ private:
 
     //! Liste des threads MyThread qui executent les calculs.
 
-    QList<DelegationTread*> threadList;
+    QList<DelegationThread*> threadList;
 
 };
 //! [0]

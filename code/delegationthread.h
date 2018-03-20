@@ -12,12 +12,12 @@ class QImage;
 QT_END_NAMESPACE
 
 //! [0]
-class DelegationTread: public QThread{
+class DelegationThread: public QThread{
     Q_OBJECT
 public:
 
-    ~DelegationTread();
-    DelegationTread(double centerX, double centerY, double scaleFactor, QSize* resultSize, QImage* image, int maxIterations, int y0, int y1, bool* restart, bool* abort,uint* colormap, QObject* parent = 0);
+    ~DelegationThread();
+    DelegationThread(double centerX, double centerY, double scaleFactor, QSize* resultSize, QImage* image, int maxIterations, int y0, int y1, bool* restart, bool* abort,uint* colormap, QObject* parent = 0);
 
 signals:
     void renderedImage(const QImage &image, double scaleFactor);

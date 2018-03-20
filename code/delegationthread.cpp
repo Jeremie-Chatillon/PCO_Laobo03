@@ -1,9 +1,9 @@
-#include "delegationtread.h"
+#include "delegationthread.h"
 
 #include <iostream>
 #include <QtWidgets>
 
-DelegationTread::~DelegationTread()
+DelegationThread::~DelegationThread()
 {
     mutex.lock();
     condition.wakeOne();
@@ -13,7 +13,7 @@ DelegationTread::~DelegationTread()
     wait();
 }
 
-DelegationTread::DelegationTread(double centerX, double centerY, double scaleFactor, QSize* resultSize, QImage* image, int maxIterations, int y0, int y1, bool* restart, bool* abort, uint* colormap, QObject *parent)
+DelegationThread::DelegationThread(double centerX, double centerY, double scaleFactor, QSize* resultSize, QImage* image, int maxIterations, int y0, int y1, bool* restart, bool* abort, uint* colormap, QObject *parent)
     :QThread(parent), centerX(centerX), centerY(centerY), scaleFactor(scaleFactor), resultSize(resultSize), image(image), maxIterations(maxIterations), y0(y0), y1(y1), restart(restart), abort(abort), colormap(colormap)
 {
 }
@@ -24,7 +24,7 @@ DelegationTread::DelegationTread(double centerX, double centerY, double scaleFac
  * Pas besoin de faire une copie local des valeurs de calculs car elles ne peuvent être modifiées pendant l'execution.
  *
  */
-void DelegationTread::run(){
+void DelegationThread::run(){
 
     int halfWidth = resultSize->width() / 2;
     int halfHeight = resultSize->height() / 2;
@@ -33,7 +33,7 @@ void DelegationTread::run(){
 
     for (int y = y0; y < y1; ++y) {
         if (*restart)
-            break;
+            return;
         if (*abort)
             return;
 

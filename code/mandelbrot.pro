@@ -2,11 +2,11 @@ QT += widgets
 
 HEADERS       = mandelbrotwidget.h \
                 renderthread.h \
-    delegationtread.h
+    delegationthread.h
 SOURCES       = main.cpp \
                 mandelbrotwidget.cpp \
                 renderthread.cpp \
-    delegationtread.cpp
+    delegationthread.cpp
 
 unix:!mac:!vxworks:!integrity:LIBS += -lm
 

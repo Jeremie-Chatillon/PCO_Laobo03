@@ -91,7 +91,7 @@ void RenderThread::render(double centerX, double centerY, double scaleFactor,
 
 void RenderThread::run()
 {
-    DelegationTread* currentThread;
+    DelegationThread* currentThread;
 
     forever {
         mutex.lock();
@@ -113,18 +113,27 @@ void RenderThread::run()
 
 
         while (pass < NumPasses && !restart){
+            if (abort)
+                return;
+
 
             QTime startTime = QTime::currentTime();
             QImage image(resultSize, QImage::Format_RGB32);
 
             int maxIterations = (1 << (2 * pass + 6)) + 32;
-
+            int rest  = 0;
             // Calculs threads creation et stockage dans une liste
             for (size_t i=0; i<thread_count; i++)
             {
-                currentThread = new DelegationTread(centerX, centerY, scaleFactor, &resultSize, &image, maxIterations, imgStartY + (diffHeigt * i), imgStartY + (diffHeigt * (i +1)), &restart,  &abort, colormap);
+
+                currentThread = new DelegationThread(centerX, centerY, scaleFactor, &resultSize, &image, maxIterations, imgStartY + (diffHeigt * i), imgStartY + (diffHeigt * (i +1)) + rest, &restart,  &abort, colormap);
                 threadList.append(currentThread);
                 currentThread->start();
+
+                // Le dernier thread prends la hauteur restante (car c'est une divison entière)
+                if(i == thread_count - 2)
+                    rest = tmpHeight % thread_count;
+
             }
 
             // Calculs threads wait and delete
@@ -135,6 +144,8 @@ void RenderThread::run()
                 delete currentThread;
             }
             threadList.clear();
+
+
 
             QTime endTime = QTime::currentTime();
             std::cout << "Time for pass " << pass << " (in ms) : " << startTime.msecsTo(endTime) << std::endl;
