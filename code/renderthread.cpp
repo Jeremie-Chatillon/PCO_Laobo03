@@ -106,13 +106,15 @@ void RenderThread::run()
         const int NumPasses = 8;
         int pass = 0;
 
-        // Découpage de l'image par la heuteur en fonction du nombre de thread idéal
+        // Découpage de l'image par la heuteur en fonction du nombre de thread
+        //  idéal
         int tmpHeight = resultSize.height();
         int imgStartY = - tmpHeight/2;
         int diffHeigt = tmpHeight/thread_count;
 
-
+        // n'effectue plus toutes les passes quand l'image est redimentionnée
         while (pass < NumPasses && !restart){
+            // quitte la fonction
             if (abort)
                 return;
 
@@ -126,14 +128,19 @@ void RenderThread::run()
             for (size_t i=0; i<thread_count; i++)
             {
 
-                currentThread = new DelegationThread(centerX, centerY, scaleFactor, &resultSize, &image, maxIterations, imgStartY + (diffHeigt * i), imgStartY + (diffHeigt * (i +1)) + rest, &restart,  &abort, colormap);
-                threadList.append(currentThread);
-                currentThread->start();
-
-                // Le dernier thread prends la hauteur restante (car c'est une divison entière)
+                // Le dernier thread prends la hauteur restante (car c'est une
+                //  divison entière)
                 if(i == thread_count - 2)
                     rest = tmpHeight % thread_count;
 
+                currentThread = new DelegationThread(centerX, centerY,
+                                    scaleFactor, &resultSize, &image,
+                                    maxIterations, imgStartY + (diffHeigt * i),
+                                    imgStartY + (diffHeigt * (i +1)) + rest,
+                                    &restart,  &abort, colormap);
+
+                threadList.append(currentThread);
+                currentThread->start();
             }
 
             // Calculs threads wait and delete
@@ -148,7 +155,8 @@ void RenderThread::run()
 
 
             QTime endTime = QTime::currentTime();
-            std::cout << "Time for pass " << pass << " (in ms) : " << startTime.msecsTo(endTime) << std::endl;
+            std::cout << "Time for pass " << pass << " (in ms) : "
+                      << startTime.msecsTo(endTime) << std::endl;
 
             if (!restart)
                 emit renderedImage(image, scaleFactor);
@@ -161,8 +169,6 @@ void RenderThread::run()
             condition.wait(&mutex);
         restart = false;
         mutex.unlock();
-
-
     }
 }
 
