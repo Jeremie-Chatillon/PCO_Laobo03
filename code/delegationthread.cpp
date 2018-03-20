@@ -1,3 +1,12 @@
+/**
+  * PCO_Labo03
+  *
+  * Classe permettant la délégation de calculs de la courbe de mandelbrot
+  *
+  * Autors : Châtillon, Smith
+  */
+
+
 #include "delegationthread.h"
 
 #include <iostream>

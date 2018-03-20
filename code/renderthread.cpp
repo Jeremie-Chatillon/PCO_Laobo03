@@ -37,6 +37,14 @@
 ** $QT_END_LICENSE$
 **
 ****************************************************************************/
+/**
+  * PCO_Labo03
+  *
+  * Classe permettant la génération de l'image de la courbe de mandelbrot
+  *
+  * Autors : Châtillon, Smith
+  */
+
 
 #include "renderthread.h"
 
@@ -45,12 +53,12 @@
 #include <math.h>
 #include <iostream>
 
-// Obtenir le nb de coeur
-
 RenderThread::RenderThread(QObject *parent)
     : QThread(parent)
 {
-   thread_count = QThread::idealThreadCount();
+
+    // Récupère le nombre idéal de threads
+    thread_count = QThread::idealThreadCount();
 
     restart = false;
     abort = false;
@@ -66,7 +74,6 @@ RenderThread::~RenderThread()
     abort = true;
     condition.wakeOne();
     mutex.unlock();
-
 
     wait();
 }
@@ -95,7 +102,6 @@ void RenderThread::run()
 
     forever {
         mutex.lock();
-        // Stoppper tout les threads
         QSize resultSize = this->resultSize;
         double scaleFactor = this->scaleFactor;
         double centerX = this->centerX;
@@ -124,14 +130,15 @@ void RenderThread::run()
 
             int maxIterations = (1 << (2 * pass + 6)) + 32;
             int rest  = 0;
-            // Calculs threads creation et stockage dans une liste
+            // Calculs, creation et stockage et start les threads dans une liste
             for (size_t i=0; i<thread_count; i++)
             {
 
                 // Le dernier thread prends la hauteur restante (car c'est une
                 //  divison entière)
-                if(i == thread_count - 2)
+                if(i == thread_count -1)
                     rest = tmpHeight % thread_count;
+
 
                 currentThread = new DelegationThread(centerX, centerY,
                                     scaleFactor, &resultSize, &image,

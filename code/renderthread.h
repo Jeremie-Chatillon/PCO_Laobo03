@@ -37,6 +37,15 @@
 ** $QT_END_LICENSE$
 **
 ****************************************************************************/
+/**
+  * PCO_Labo03
+  *
+  * Classe permettant la génération de l'image de la courbe de mandelbrot
+  *
+  * Autors : Châtillon, Smith
+  */
+
+
 
 #ifndef RENDERTHREAD_H
 #define RENDERTHREAD_H
